@@ -1,0 +1,41 @@
+﻿@page
+@model webapp1.Pages.loginModel
+@{
+    ViewData["Title"] = "Login";
+}
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/webapp1.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="center-container">
+        <div class="login-card">
+            <h2>Login</h2>
+            <form method="post">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="Username" asp-for="Username" class="form-control" required />
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="Password" asp-for="Password" class="form-control" required />
+
+                <button type="submit" class="btn btn-success mt-3 w-100">Login</button>
+
+                @if (!string.IsNullOrEmpty(Model.Message))
+                {
+                    <div class="alert alert-danger mt-3 text-center">
+                        @Model.Message
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</body>
