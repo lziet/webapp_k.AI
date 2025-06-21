@@ -60,7 +60,7 @@ namespace webapp1.Pages
             try
             {
                 // Step 1: Register
-                var regResponse = await httpClient.PostAsync("https://localhost:7105/Users/Create", registerContent);
+                var regResponse = await httpClient.PostAsync($"{_config.ApiBaseURL}/Users/Create", registerContent);
 
                 if (!regResponse.IsSuccessStatusCode)
                 {

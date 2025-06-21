@@ -31,7 +31,7 @@ public class mainModel : PageModel
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var response = await client.GetAsync($"https://localhost:7105/Users/GetById/{userId}");
+        var response = await client.GetAsync($"{_config.ApiBaseURL}/Users/GetById/{userId}");
         if (!response.IsSuccessStatusCode)
             return RedirectToPage("/Login");
 
@@ -84,7 +84,7 @@ public class mainModel : PageModel
             var json = JsonSerializer.Serialize(updatedData);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await client.PutAsync($"https://localhost:7105/Users/Update/{userId}", content);
+            var response = await client.PutAsync($"{_config.ApiBaseURL}/Users/Update/{userId}", content);
 
             if (response.IsSuccessStatusCode)
             {
