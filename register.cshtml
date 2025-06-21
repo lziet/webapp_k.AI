@@ -1,0 +1,90 @@
+﻿@page
+@model registerModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Zen+Old+Mincho&display=swap" rel="stylesheet">
+<div class="center-container">
+    <div class="login-card">
+        <h2>User Registration</h2>
+        <form method="post">
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label">Full name</label>
+                <input asp-for="FullName" class="form-control" placeholder="" required />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email</label>
+                <input asp-for="Email" type="email" class="form-control" placeholder="" required />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="PhoneNumber" class="form-label">Phone number</label>
+                <input asp-for="PhoneNumber" class="form-control" placeholder="" required />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Address" class="form-label">Address</label>
+                <input asp-for="Address" class="form-control" placeholder="" required />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label">Username</label>
+                <input asp-for="Username" class="form-control" placeholder="" required />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">Password</label>
+                <input asp-for="Password" type="password" class="form-control" placeholder="" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Sign up</button>
+        </form>
+
+        @if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <div class="alert alert-info">@Model.Message</div>
+        }
+
+    </div>
+</div>
+
+
+<script>
+    document.getElementById("signupForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const data = {
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value,
+            fullname: document.getElementById("fullname").value,
+            email: document.getElementById("email").value,
+            phone: document.getElementById("phone").value,
+            address: document.getElementById("address").value
+        };
+
+        try {
+            const response = await fetch("/users/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            const msgBox = document.getElementById("message");
+
+            if (response.ok) {
+                msgBox.textContent = "Signup successful!";
+                msgBox.style.color = "green";
+            } else {
+                msgBox.textContent = result.message || "Signup failed.";
+                msgBox.style.color = "red";
+            }
+        } catch (error) {
+            document.getElementById("message").textContent = "Error submitting signup.";
+        }
+    });
+</script>

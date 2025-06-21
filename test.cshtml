@@ -1,0 +1,64 @@
+﻿@page
+@model testModel
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Zen+Old+Mincho&display=swap" rel="stylesheet">
+
+<h2>Questions</h2>
+<p>Choose each option once for each question.</p>
+
+<form method="post">
+    <ol>
+        @for (int i = 0; i < Model.Questions.Count; i++)
+        {
+            var q = Model.Questions[i];
+            <div class="mb-4">
+                <p><strong>@(i + 1). @q.Content</strong></p>
+                <div class="d-flex justify-content-between text-center w-100">
+                    @foreach (var option in new[] { "Disagree", "Slightly disagree", "Neutral", "Slightly agree", "Agree" })
+                    {
+                        <div class="flex-fill">
+                            <input type="radio" id="q@i-@option" name="Ratings[@i]" value="@GetRating(option)" required />
+                            <label for="q@i-@option">@option</label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </ol>
+
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-info mt-3">@Model.Message</div>
+}
+
+@functions {
+    private string GetRating(string letter)
+    {
+        return letter switch
+        {
+            "Disagree" => "1", // Disagree
+            "Slightly disagree" => "2",
+            "Neutral" => "3", // Neutral
+            "Slightly agree" => "4",
+            "Agree" => "5", // Agree
+            _ => "0"
+        };
+    }
+}
+
+        @section Scripts {
+    <script>
+        const shouldPopup = '@TempData["ShowSuccess"]' === 'True';
+        if (shouldPopup) {
+            alert("✅ Done!");
+            window.location.href = "/Main";
+        }
+    </script>
+}
