@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
+using webapp1.Services;
 
 namespace webapp1.Pages
 {
@@ -29,6 +31,12 @@ namespace webapp1.Pages
             public string Password { get; set; }
         }
 
+        private readonly AppSettingConfig _config;
+
+        public registerModel(IOptions<AppSettingConfig> config)
+        {
+            _config = config.Value;
+        }
         public async Task<IActionResult> OnPostAsync()
         {
             using var httpClient = new HttpClient();

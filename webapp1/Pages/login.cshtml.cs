@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using System;
+using webapp1.Services;
 
 namespace webapp1.Pages
 {
@@ -16,6 +18,12 @@ namespace webapp1.Pages
 
         public string Message { get; set; }
 
+        private readonly AppSettingConfig _config;
+
+        public loginModel(IOptions<AppSettingConfig> config)
+        {
+            _config = config.Value;
+        }
         public void OnGet()
         {
         }
@@ -51,10 +59,14 @@ namespace webapp1.Pages
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(30)
                 });
 
+                TempData["Username"] = Username;
+                TempData["Password"] = Password;
+
                 return RedirectToPage("/Main");
+
             }
             catch (Exception ex)
             {

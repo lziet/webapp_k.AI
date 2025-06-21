@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using webapp1.Services;
 
 namespace webapp1.Pages
 {
@@ -26,6 +28,13 @@ namespace webapp1.Pages
         public List<int> Ratings { get; set; } = new();
 
         public string Message { get; set; }
+
+        private readonly AppSettingConfig _config;
+
+        public testModel(IOptions<AppSettingConfig> config)
+        {
+            _config = config.Value;
+        }
 
         public async Task<IActionResult> OnGetAsync()
         {

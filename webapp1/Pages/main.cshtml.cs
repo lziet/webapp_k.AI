@@ -1,15 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+﻿using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using System;
 using Microsoft.AspNetCore.Mvc;
+using webapp1.Services;
 
 public class mainModel : PageModel
 {
     public UserDto UserData { get; set; }
 
+    private readonly AppSettingConfig _config;
+
+    public mainModel(IOptions<AppSettingConfig> config)
+    {
+        _config = config.Value;
+    }
     public async Task<IActionResult> OnGetAsync([FromForm] string action)
     {
         var token = Request.Cookies["AuthToken"];

@@ -1,3 +1,5 @@
+using webapp1.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,7 +9,11 @@ builder.Services.AddAuthentication("MyCookieAuth")
     .AddCookie("MyCookieAuth", options =>
     {
         options.LoginPath = "/Login"; // or wherever your login page is
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(5); 
     });
+
+builder.Services.Configure<AppSettingConfig>(builder.Configuration.GetSection("AppSettingConfig"));
+
 
 builder.Services.AddAuthorization();
 
