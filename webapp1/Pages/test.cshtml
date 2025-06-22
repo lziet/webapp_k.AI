@@ -21,8 +21,8 @@
 </div>
 
 <div style="padding: 100px;">
-    <h1>Questions</h1>
-    <p>Choose each option once for each question.</p>
+    <h1>BÀI KIỂM TRA HỖ TRỢ XÁC ĐỊNH SỞ THÍCH VÀ GỢI Ý LỰA CHỌN NHÓM MÔN HỌC CHO HỌC SINH LỚP 10</h1>
+    <p>Lựa chọn một trong 5 lựa chọn cho mỗi câu hỏi</p>
 
     <form method="post">
         @for (int i = 0; i < Model.Questions.Count; i++)
@@ -41,11 +41,11 @@
                             @{
                                 var label = j switch
                                 {
-                                    1 => "Disagree",
-                                    2 => "Slightly disagree",
-                                    3 => "Neutral",
-                                    4 => "Slightly agree",
-                                    5 => "Agree",
+                                    1 => "Hoàn toàn không đồng ý",
+                                    2 => "Không hoàn toàn đồng ý",
+                                    3 => "Bình thường",
+                                    4 => "Đồng ý một phần",
+                                    5 => "Hoàn toàn đồng ý",
                                     _ => "Option"
                                 };
                             }
@@ -57,7 +57,7 @@
         }
 
         <div class="text-center mt-4">
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary">Gửi bài làm</button>
         </div>
     </form>
 

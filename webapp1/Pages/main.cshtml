@@ -205,10 +205,9 @@
 <body class="body">
     <div class="subpad">
     <div class="welcome">
-        <h2>Welcome, @user.FullName!</h2>
+        <h2>Xin chào, @user.FullName!</h2>
         <p>
-            This is the main interface. Use the panels below to manage your
-            info or access options.
+            Đây là trang chính. Bạn có thể xem và chỉnh sửa thông tin tài khoản của mình hoặc làm bài kiểm tra đánh giá năng lực bên dưới  
         </p>
     </div>
 
@@ -217,7 +216,7 @@
         <div class="box-card" id="leftBox">
             <!-- View Mode -->
             <div id="infoDisplay">
-                <h3>Account Information</h3>
+                <h3>Thông Tin Tài Khoản</h3>
                 <ul>
                     <li><strong>Username:</strong> @user.Username</li>
                     <li><strong>Full Name:</strong> @user.FullName</li>
@@ -229,7 +228,7 @@
                     <button type="button"
                             class="change-btn"
                             onclick="toggleEdit(true)">
-                        Change Info
+                        Thay đổi thông tin
                     </button>
                 </form>
             </div>
@@ -286,16 +285,16 @@
             <!-- Logout -->
             <form method="post">
                 <button type="submit" name="action" value="logout">
-                    Log out
+                    Đăng Xuất
                 </button>
             </form>
         </div>
 
         <!-- Right Box: Options -->
         <div class="box-card">
-            <h2>Options</h2>
-            <a asp-page="/test">Test</a>
-            <a asp-page="/results">Results</a>
+            <h2>Lựa Chọn</h2>
+            <a asp-page="/test">Làm Bài Kiểm Tra</a>
+            <a asp-page="/results">Kết Quả</a>
         </div>
     </div>
     </div>
