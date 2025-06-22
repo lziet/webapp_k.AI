@@ -1,18 +1,34 @@
 ﻿@page
-@model indexModel
+@model webapp1.Pages.indexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Trang chào mừng";
 }
 
+<!-- Link font -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Zen+Old+Mincho&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900&display=swap" rel="stylesheet">
 
-<div class="text-center">
-    <img src="~/images/LogoThuDuc.png" alt="Cool Image" class="logo-img" />
+<!-- Main welcome content -->
+<div class="welcome-container">
+    <img src="~/images/LogoThuDuc.png" alt="Logo THPT Thủ Đức" class="welcome-logo" />
+
+    <h2 class="welcome-title">
+        Công cụ hỗ trợ xác định sở thích và gợi ý lựa chọn nhóm môn học cho học sinh lớp 10
+    </h2>
+
+
+    <div class="card shadow p-4 rounded welcome-card">
+        <p class="mb-4">Chọn loại tài khoản của bạn</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a asp-page="/Login" class="btn btn-primary">Đăng nhập</a>
+            <a asp-page="/Register" class="btn btn-primary">Đăng ký</a>
+        </div>
+    </div>
 </div>
 
-<div class="text-center">
-    <h1 class="display-4 welcome-text">Chào Mừng Đến Bình Nguyên Vô Tận</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+
+<!-- Footer -->
+<footer class="text-white text-center py-3">
+    © 2016–2025 THPT Thủ Đức. All rights reserved.
+</footer>

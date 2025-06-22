@@ -9,54 +9,24 @@
     <link rel="stylesheet" href="~/webapp1.styles.css" asp-append-version="true" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Zen+Old+Mincho&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900&family=Zen+Old+Mincho&display=swap" rel="stylesheet">
 </head>
-<body style="overflow-y: scroll;">
-    @{
-        var isLoggedIn = Context.Request.Cookies["AuthToken"] != null;
-    }
+<body style="overflow-y: scroll; margin: 0; padding: 0;">
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar bên trái -->
-            <div class="col-2 bg-light vh-100 p-3">
-                <h5 class="mb-3">Menu</h5>
-                <ul class="nav flex-column">
-                    @if (isLoggedIn)
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Main">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Register">Register</a>
-                        </li>
-                    }
-                </ul>
-            </div>
+    <!-- Navbar đặt ngoài container-fluid -->
+    <nav class="navbar">
+        <a class="navbar-brand" href="#">THPT Thủ Đức</a>
+    </nav>
 
-            <!-- Nội dung chính bên phải -->
-            <div class="col-10 pt-3">
-                <main role="main" class="pb-3">
-                    @RenderBody()
-                </main>
-            </div>
-        </div>
-    </div>
+    <!-- Nội dung chính -->
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        © 2016–2025 THPT Thủ Đức. All rights reserved.
+    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -66,8 +36,6 @@
         initializeTokenManager();
     </script>
 
-
     @await RenderSectionAsync("Scripts", required: false)
-
 </body>
 </html>
