@@ -1,0 +1,125 @@
+﻿@page
+@model webapp1.Pages.resultsModel
+@{
+    ViewData["Title"] = "Transcript Results";
+}
+
+<div style="padding-top: 30px; padding-left: 30px;">
+    <a href="/main" style="
+        display: inline-block;
+        background-color: #ffffffcc;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        transition: background-color 0.2s ease;
+    " onmouseover="this.style.backgroundColor='#e0f0ff'" onmouseout="this.style.backgroundColor='#ffffffcc'">
+        ← Back to Info Page
+    </a>
+</div>
+
+<!-- Optional basic styling for aesthetics -->
+<style>
+    .container {
+        padding: 100px;
+    }
+
+    .transcript-card {
+        background-color: #fff;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .transcript-header {
+        padding: 16px;
+        background-color: #0066cc;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 16px;
+    }
+
+    .transcript-body {
+        display: none;
+        padding: 16px;
+        background-color: #f9f9f9;
+    }
+
+        .transcript-body table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .transcript-body th,
+        .transcript-body td {
+            padding: 8px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        .transcript-body th {
+            background-color: #f0f0f0;
+        }
+</style>
+
+<div class="container">
+
+    <h1>Your Transcript Results</h1>
+
+    @if (Model.Transcripts.Count == 0)
+    {
+        <p>No transcripts found.</p>
+    }
+    else
+    {
+        foreach (var transcript in Model.Transcripts.OrderByDescending(t => t.Date))
+        {
+            <div class="transcript-card">
+                <div class="transcript-header" onclick="toggleTranscriptBody(this)">
+                    ID: @transcript.Id_transcript - @transcript.Date.ToString("M/d/yyyy h:mm tt")
+                </div>
+                <div class="transcript-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Question</th>
+                                <th>Answer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Questions.Count; i++)
+                            {
+                                var question = Model.Questions[i];
+                                var answerCode = Model.GetAnswerForQuestion(transcript.Content, i + 1);
+                                var answerDesc = Model.GetAnswerDescription(answerCode);
+                                <tr>
+                                    <td>@(i + 1)</td>
+                                    <td>@question.Content</td>
+                                    <td>@answerDesc</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <p style="color: red;">@Model.Message</p>
+    }
+</div>
+
+<script>
+    function toggleTranscriptBody(header) {
+        const body = header.nextElementSibling;
+        const isVisible = body.style.display === "block";
+        body.style.display = isVisible ? "none" : "block";
+    }
+</script>

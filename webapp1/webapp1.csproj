@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Pages\result.cshtml" />
     <Content Remove="wwwroot\lib\JwtHelper.cs" />
   </ItemGroup>
 
@@ -16,20 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <UpToDateCheckInput Remove="Pages\result.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Pages\result.cshtml" />
     <_ContentIncludedByDefault Remove="wwwroot\lib\JwtHelper.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="wwwroot\lib\JwtHelper.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Pages\result.cshtml" />
   </ItemGroup>
 
   <ItemGroup>

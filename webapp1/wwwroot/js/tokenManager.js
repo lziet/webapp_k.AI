@@ -122,4 +122,22 @@ function initializeTokenManager() {
 // Auto-run on page load
 document.addEventListener("DOMContentLoaded", () => {
     initializeTokenManager();
+    updateAuthUI(); // 👈 Add this line
 });
+function updateAuthUI() {
+    const token = sessionStorage.getItem("jwt");
+    const decoded = parseJwt(token);
+    const now = Date.now();
+
+    if (token && decoded && decoded.exp * 1000 > now) {
+        const authButtons = document.getElementById("auth-buttons");
+        if (authButtons) {
+            authButtons.innerHTML = `
+                <button class="btn btn-success" onclick="location.href='/MainPage'">
+                    Vào trang chính
+                </button>
+            `;
+        }
+    }
+}
+

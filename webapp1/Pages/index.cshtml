@@ -1,15 +1,9 @@
 ﻿@page
-@model webapp1.Pages.indexModel
+@model webapp1.Pages.IndexModel
 @{
     ViewData["Title"] = "Trang chào mừng";
 }
 
-<!-- Link font -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900&display=swap" rel="stylesheet">
-
-<!-- Main welcome content -->
 <div class="welcome-container">
     <img src="~/images/LogoThuDuc.png" alt="Logo THPT Thủ Đức" class="welcome-logo" />
 
@@ -17,18 +11,27 @@
         Công cụ hỗ trợ xác định sở thích và gợi ý lựa chọn nhóm môn học cho học sinh lớp 10
     </h2>
 
-
-    <div class="card shadow p-4 rounded welcome-card">
-        <p class="mb-4">Chọn loại tài khoản của bạn</p>
-        <div class="d-flex justify-content-center gap-3">
-            <a asp-page="/Login" class="btn btn-primary">Đăng nhập</a>
-            <a asp-page="/Register" class="btn btn-primary">Đăng ký</a>
+    @if (!Model.IsLoggedIn)
+    {
+        <div class="card shadow p-4 rounded welcome-card">
+            <p class="mb-4">Chọn loại tài khoản của bạn</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-page="/Login" class="btn btn-primary">Đăng nhập</a>
+                <a asp-page="/Register" class="btn btn-primary">Đăng ký</a>
+            </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="card shadow p-4 rounded welcome-card">
+            <p class="mb-4">Bạn đã đăng nhập bằng một tài khoản.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="/Main" class="btn btn-success">Vào trang chính</a>
+            </div>
+        </div>
+    }
 </div>
 
-
-<!-- Footer -->
 <footer class="text-white text-center py-3">
     © 2016–2025 THPT Thủ Đức. All rights reserved.
 </footer>

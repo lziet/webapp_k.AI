@@ -18,9 +18,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 75vh;
+            height: 100vh;
             gap: 50px;
-            padding: 0;
+            padding: 100px;
         }
 
         .left-box,
@@ -195,9 +195,15 @@
             #editForm button {
                 grid-column: span 2; /* Buttons span full width */
             }
+
+        .subpad {
+            padding-top: 100px;
+            padding-bottom: 100px;
+        }
     </style>
 </head>
 <body class="body">
+    <div class="subpad">
     <div class="welcome">
         <h2>Welcome, @user.FullName!</h2>
         <p>
@@ -289,8 +295,9 @@
         <div class="box-card">
             <h2>Options</h2>
             <a asp-page="/test">Test</a>
-            <a asp-page="/result">Results</a>
+            <a asp-page="/results">Results</a>
         </div>
+    </div>
     </div>
 
     <script>

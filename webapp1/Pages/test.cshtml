@@ -1,64 +1,92 @@
 ﻿@page
-@model testModel
+@model webapp1.Pages.testModel
+@{
+    ViewData["Title"] = "Questions";
+}
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Zen+Old+Mincho&display=swap" rel="stylesheet">
+<div style="padding-top: 30px; padding-left: 30px;">
+    <a href="/main" style="
+        display: inline-block;
+        background-color: #ffffffcc;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: #007bff;
+        text-decoration: none;
+        font-weight: bold;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        transition: background-color 0.2s ease;
+    " onmouseover="this.style.backgroundColor='#e0f0ff'" onmouseout="this.style.backgroundColor='#ffffffcc'">
+        ← Back to Info Page
+    </a>
+</div>
 
-<h2>Questions</h2>
-<p>Choose each option once for each question.</p>
+<div style="padding: 100px;">
+    <h1>Questions</h1>
+    <p>Choose each option once for each question.</p>
 
-<form method="post">
-    <ol>
+    <form method="post">
         @for (int i = 0; i < Model.Questions.Count; i++)
         {
-            var q = Model.Questions[i];
-            <div class="mb-4">
-                <p><strong>@(i + 1). @q.Content</strong></p>
-                <div class="d-flex justify-content-between text-center w-100">
-                    @foreach (var option in new[] { "Disagree", "Slightly disagree", "Neutral", "Slightly agree", "Agree" })
+            <div style="margin-bottom: 16px;">
+                <p style="margin-bottom: 8px;"><strong>@(i + 1). @Model.Questions[i].Content</strong></p>
+                @{
+                    var name = $"Ratings[{i}]";
+                }
+
+                <div style="display: flex; justify-content: space-between; gap: 5px;">
+                    @for (int j = 1; j <= 5; j++)
                     {
-                        <div class="flex-fill">
-                            <input type="radio" id="q@i-@option" name="Ratings[@i]" value="@GetRating(option)" required />
-                            <label for="q@i-@option">@option</label>
-                        </div>
+                        <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <input type="radio" name="@name" value="@j" required />
+                            @{
+                                var label = j switch
+                                {
+                                    1 => "Disagree",
+                                    2 => "Slightly disagree",
+                                    3 => "Neutral",
+                                    4 => "Slightly agree",
+                                    5 => "Agree",
+                                    _ => "Option"
+                                };
+                            }
+                            @label
+                        </label>
                     }
                 </div>
             </div>
         }
-    </ol>
 
-    <div class="text-center mt-4">
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </div>
-</form>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
 
-@if (!string.IsNullOrEmpty(Model.Message))
-{
-    <div class="alert alert-info mt-3">@Model.Message</div>
-}
-
-@functions {
-    private string GetRating(string letter)
+    @if (!string.IsNullOrEmpty(Model.Message))
     {
-        return letter switch
-        {
-            "Disagree" => "1", // Disagree
-            "Slightly disagree" => "2",
-            "Neutral" => "3", // Neutral
-            "Slightly agree" => "4",
-            "Agree" => "5", // Agree
-            _ => "0"
-        };
+        <div class="alert alert-info mt-3">@Model.Message</div>
     }
-}
 
-        @section Scripts {
-    <script>
-        const shouldPopup = '@TempData["ShowSuccess"]' === 'True';
-        if (shouldPopup) {
-            alert("✅ Done!");
-            window.location.href = "/Main";
+    @functions {
+        private string GetRating(string letter)
+        {
+            return letter switch
+            {
+                "Disagree" => "1", // Disagree
+                "Slightly disagree" => "2",
+                "Neutral" => "3", // Neutral
+                "Slightly agree" => "4",
+                "Agree" => "5", // Agree
+                _ => "0"
+            };
         }
-    </script>
-}
+    }
+
+    @section Scripts {
+        <script>
+            const shouldPopup = '@TempData["ShowSuccess"]' === 'True';
+            if (shouldPopup) {
+                alert("✅ Done!");
+                window.location.href = "/Main";
+            }
+        </script>
+    }
