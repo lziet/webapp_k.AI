@@ -74,7 +74,7 @@ namespace webapp1.Pages
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await client.PostAsync("https://localhost:7105/api/Transcript", content);
+            var response = await client.PostAsync($"{_config.ApiBaseURL}/api/Transcript", content);
             var responseBody = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)

@@ -42,7 +42,7 @@ namespace webapp1.Pages
 
             try
             {
-                var response = await httpClient.PostAsync("https://localhost:7105/api/Users/Login", content);
+                var response = await httpClient.PostAsync($"{_config.ApiBaseURL}/api/Users/Login", content);
 
                 if (!response.IsSuccessStatusCode)
                 {
