@@ -49,15 +49,47 @@ async function loginAndRefresh() {
         });
 
         const data = await response.json();
-        if (data && data.data) {
-            const token = data.data;
+        if (data && data.data && data.data.accessToken && data.data.refreshToken) {
+            const token = data.data.accessToken;
+            const refreshToken = data.data.refreshToken;
             sessionStorage.setItem("jwt", token);
+            sessionStorage.setItem("refreshToken", refreshToken);
             scheduleRefresh(token);
         }
+
     } catch (err) {
         console.error("Token refresh failed", err);
     }
 }
+
+async function renewToken() {
+    const refreshToken = sessionStorage.getItem("refreshToken");
+    if (!refreshToken) {
+        console.warn("No refresh token available.");
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/Users/RenewToken', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken })
+        });
+
+        const data = await response.json();
+        if (data && data.data && data.data.token) {
+            const token = data.data.token;
+            sessionStorage.setItem("jwt", token);
+            scheduleRefresh(token);
+            console.log("🔄 Token successfully renewed.");
+        } else {
+            console.warn("Token renewal failed.");
+        }
+    } catch (err) {
+        console.error("Token renewal error", err);
+    }
+}
+
 
 function scheduleRefresh(token) {
     const decoded = parseJwt(token);
@@ -77,9 +109,10 @@ function scheduleRefresh(token) {
 
     refreshTimer = setTimeout(() => {
         if (document.visibilityState === 'visible') {
-            loginAndRefresh();
+            renewToken();
         }
     }, msUntilRefresh);
+
 }
 
 function checkAndRefreshToken() {
@@ -102,6 +135,13 @@ function checkAndRefreshToken() {
         console.log("⚠️ Token about to expire — refreshing...");
         loginAndRefresh();
     }
+
+    refreshTimer = setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+            renewToken();
+        }
+    }, msUntilRefresh);
+
 }
 
 function initializeTokenManager() {

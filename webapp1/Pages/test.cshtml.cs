@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using webapp1.Services;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace webapp1.Pages
 {
@@ -58,15 +59,77 @@ namespace webapp1.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var token = Request.Cookies["AuthToken"];
+            string token = Request.Cookies["AuthToken"];
+            string refreshToken = Request.Cookies["RefreshToken"];
+
             if (string.IsNullOrEmpty(token)) return RedirectToPage("/Login");
 
-            if (Ratings == null || Ratings.Count != 25)
+            try
             {
-                Message = $"❌ You must answer all 25 questions. You answered {Ratings?.Count ?? 0}.";
-                return await OnGetAsync(); // re-fetch questions
+                var handler = new JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(token);
+                var exp = jwt.Payload.Exp;
+
+                if (exp.HasValue)
+                {
+                    var expiryDate = DateTimeOffset.FromUnixTimeSeconds(exp.Value);
+                    if (expiryDate <= DateTimeOffset.UtcNow)
+                    {
+                        // Token expired - try to renew
+                        if (string.IsNullOrEmpty(refreshToken)) return RedirectToPage("/Login");
+
+                        using var refreshClient = new HttpClient();
+                        var refreshPayload = new
+                        {
+                            accessToken = token,
+                            refreshToken = refreshToken
+                        };
+
+                        var refreshContent = new StringContent(JsonSerializer.Serialize(refreshPayload), Encoding.UTF8, "application/json");
+                        var refreshResponse = await refreshClient.PostAsync($"{_config.ApiBaseURL}/api/Users/RenewToken", refreshContent);
+
+                        if (!refreshResponse.IsSuccessStatusCode)
+                            return RedirectToPage("/Login");
+
+                        var refreshJson = await refreshResponse.Content.ReadAsStringAsync();
+                        using var doc = JsonDocument.Parse(refreshJson);
+
+                        if (doc.RootElement.TryGetProperty("data", out JsonElement dataElement) &&
+                            dataElement.TryGetProperty("accessToken", out JsonElement newAccessTokenElement) &&
+                            dataElement.TryGetProperty("refreshToken", out JsonElement newRefreshTokenElement))
+                        {
+                            token = newAccessTokenElement.GetString();
+                            refreshToken = newRefreshTokenElement.GetString();
+
+                            Response.Cookies.Append("AuthToken", token, new CookieOptions
+                            {
+                                HttpOnly = true,
+                                Secure = true,
+                                SameSite = SameSiteMode.Strict,
+                                Expires = DateTimeOffset.UtcNow.AddMinutes(30)
+                            });
+
+                            Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
+                            {
+                                HttpOnly = true,
+                                Secure = true,
+                                SameSite = SameSiteMode.Strict,
+                                Expires = DateTimeOffset.UtcNow.AddDays(7)
+                            });
+                        }
+                        else
+                        {
+                            return RedirectToPage("/Login");
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                return RedirectToPage("/Login");
             }
 
+            // Proceed to send Ratings
             var payload = new { Ratings };
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -79,13 +142,14 @@ namespace webapp1.Pages
 
             if (!response.IsSuccessStatusCode)
             {
+                Console.WriteLine($"DEBUG - StatusCode: {response.StatusCode}, Body: {responseBody}");
                 Message = $"❌ Failed: {responseBody}";
                 return await OnGetAsync();
             }
 
-            // ✅ Store a flag to trigger popup on next page load
             TempData["ShowSuccess"] = true;
-            return RedirectToPage("/test"); // reload page to trigger popup
+            return RedirectToPage("/test");
         }
+
     }
 }

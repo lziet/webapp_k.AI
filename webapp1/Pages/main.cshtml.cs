@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using webapp1.Helpers;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http;
 using System.Text.Json;
@@ -49,6 +50,7 @@ public class mainModel : PageModel
         if (action == "logout")
         {
             Response.Cookies.Delete("AuthToken");
+            Response.Cookies.Delete("RefreshToken");
             UserData = null;
             return RedirectToPage("/Login");
         }
@@ -56,18 +58,16 @@ public class mainModel : PageModel
         if (action == "update")
         {
             var token = Request.Cookies["AuthToken"];
-            if (string.IsNullOrEmpty(token)) return RedirectToPage("/Login");
+            var refreshToken = Request.Cookies["RefreshToken"];
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(refreshToken)) return RedirectToPage("/Login");
 
             var userId = JwtHelper.GetUserIdFromToken(token);
             if (string.IsNullOrEmpty(userId)) return RedirectToPage("/Login");
 
-            // Load existing user data for fallback
-            await OnGetAsync(null);
+            await OnGetAsync(null); // Get current user info
             var currentData = UserData;
 
-            // Read form values
             var form = Request.Form;
-
             var updatedData = new UserDto
             {
                 Username = string.IsNullOrWhiteSpace(form["Username"]) ? currentData.Username : form["Username"],
@@ -88,6 +88,31 @@ public class mainModel : PageModel
 
             if (response.IsSuccessStatusCode)
             {
+                // 🟢 Update succeeded — now renew token
+                var renewPayload = new
+                {
+                    accessToken = token,
+                    refreshToken = refreshToken
+                };
+
+                var renewContent = new StringContent(JsonSerializer.Serialize(renewPayload), System.Text.Encoding.UTF8, "application/json");
+                var renewResponse = await client.PostAsync($"{_config.ApiBaseURL}/api/Users/RenewToken", renewContent);
+
+                if (renewResponse.IsSuccessStatusCode)
+                {
+                    var renewJson = await renewResponse.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(renewJson);
+                    if (doc.RootElement.TryGetProperty("data", out JsonElement data) &&
+                        data.TryGetProperty("accessToken", out JsonElement newTokenElem) &&
+                        data.TryGetProperty("refreshToken", out JsonElement newRefreshElem))
+                    {
+                        var newAccessToken = newTokenElem.GetString();
+                        var newRefreshToken = newRefreshElem.GetString();
+
+                        CookieHelper.SetAuthCookies(Response, newAccessToken, newRefreshToken); // ✅ helper method
+                    }
+                }
+
                 TempData["Message"] = "Cập nhật thành công!";
                 return RedirectToPage("/Main");
             }
@@ -95,6 +120,7 @@ public class mainModel : PageModel
             TempData["Message"] = "Cập nhật thất bại.";
             return Page();
         }
+
 
         return Page();
     }

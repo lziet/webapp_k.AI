@@ -19,7 +19,7 @@ html, body {
    HEADER (NAVBAR)
 ============================= */
 .navbar {
-    background: linear-gradient(to right, #001f3f, #0074D9);
+    background: linear-gradient(to right, #FFFFFF, #0074D9);
     margin: 0;
     padding: 0 1rem;
     height: 60px;
@@ -30,12 +30,17 @@ html, body {
 }
 
 .navbar-brand {
-    color: white !important;
+    color: darkred !important;
     font-weight: bold;
     font-size: 1.6rem;
     font-family: 'Huninn', sans-serif;
     letter-spacing: 1px;
     text-decoration: none;
+}
+
+.subfooter {
+    background: linear-gradient(to right, #FFFFFF, #0074D9);
+    color: darkred !important;
 }
 
 /* =============================
@@ -69,7 +74,7 @@ html, body {
     max-width: 90%;
     width: 800px;
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: 2rem;
     margin-bottom: 30px;
     line-height: 1.6;
     word-wrap: break-word;

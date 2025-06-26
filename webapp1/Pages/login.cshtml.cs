@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using webapp1.Helpers;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
@@ -52,21 +53,47 @@ namespace webapp1.Pages
 
                 var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
-                string token = doc.RootElement.GetProperty("data").GetString();
 
-                Response.Cookies.Append("AuthToken", token, new CookieOptions
+                if (doc.RootElement.TryGetProperty("data", out JsonElement dataElement))
                 {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(30)
-                });
+                    if (dataElement.TryGetProperty("accessToken", out JsonElement tokenElement) &&
+                        dataElement.TryGetProperty("refreshToken", out JsonElement refreshTokenElement))
+                    {
+                        string token = tokenElement.GetString();
+                        string refreshToken = refreshTokenElement.GetString();
 
-                TempData["Username"] = Username;
-                TempData["Password"] = Password;
+                        Response.Cookies.Append("AuthToken", token, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            Secure = true,
+                            SameSite = SameSiteMode.Strict,
+                            Expires = DateTimeOffset.UtcNow.AddMinutes(30)
+                        });
 
-                return RedirectToPage("/Main");
+                        Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            Secure = true,
+                            SameSite = SameSiteMode.Strict,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
 
+                        TempData["Username"] = Username;
+                        TempData["Password"] = Password;
+
+                        return RedirectToPage("/Main");
+                    }
+                    else
+                    {
+                        Message = "Login response missing token information.";
+                        return Page();
+                    }
+                }
+                else
+                {
+                    Message = "Unexpected login response format.";
+                    return Page();
+                }
             }
             catch (Exception ex)
             {
@@ -74,5 +101,6 @@ namespace webapp1.Pages
                 return Page();
             }
         }
+
     }
 }

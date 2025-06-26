@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Options;
+﻿using webapp1.Helpers;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Security.Claims;
 using webapp1.Services;
+using System.Text.Json;
 
 namespace webapp1.Pages
 {
@@ -45,7 +47,7 @@ namespace webapp1.Pages
             {
                 FullName,
                 Email,
-                Phone = PhoneNumber, // Fix: match API field name
+                Phone = PhoneNumber,
                 Address,
                 Username,
                 Password
@@ -70,19 +72,14 @@ namespace webapp1.Pages
                 }
 
                 // Step 2: Login
-                var loginPayload = new
-                {
-                    Username,
-                    Password
-                };
-
+                var loginPayload = new { Username, Password };
                 var loginContent = new StringContent(
                     System.Text.Json.JsonSerializer.Serialize(loginPayload),
                     System.Text.Encoding.UTF8,
                     "application/json"
                 );
 
-                var loginResponse = await httpClient.PostAsync("https://localhost:7105/api/Users/Login", loginContent);
+                var loginResponse = await httpClient.PostAsync($"{_config.ApiBaseURL}/api/Users/Login", loginContent);
 
                 if (!loginResponse.IsSuccessStatusCode)
                 {
@@ -93,18 +90,37 @@ namespace webapp1.Pages
 
                 var loginJson = await loginResponse.Content.ReadAsStringAsync();
                 using var doc = System.Text.Json.JsonDocument.Parse(loginJson);
-                string token = doc.RootElement.GetProperty("data").GetString();
 
-                // Step 3: Store the token in a cookie
-                Response.Cookies.Append("AuthToken", token, new CookieOptions
+                if (doc.RootElement.TryGetProperty("data", out JsonElement dataElement) &&
+                    dataElement.TryGetProperty("accessToken", out JsonElement accessTokenElement) &&
+                    dataElement.TryGetProperty("refreshToken", out JsonElement refreshTokenElement))
                 {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddHours(1)
-                });
+                    var accessToken = accessTokenElement.GetString();
+                    var refreshTokenValue = refreshTokenElement.GetString(); // renamed to avoid CS0136
 
-                return RedirectToPage("/Main");
+                    Response.Cookies.Append("AuthToken", accessToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(30)
+                    });
+
+                    Response.Cookies.Append("RefreshToken", refreshTokenValue, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddDays(7)
+                    });
+
+                    return RedirectToPage("/Main");
+                }
+                else
+                {
+                    Message = "Login response missing token information.";
+                    return Page();
+                }
             }
             catch (Exception ex)
             {
@@ -112,6 +128,7 @@ namespace webapp1.Pages
                 return Page();
             }
         }
+
 
     }
 }
