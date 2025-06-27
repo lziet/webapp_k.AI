@@ -48,7 +48,10 @@ namespace webapp1.Pages
             try
             {
                 // Get transcripts
-                var transcriptResponse = await client.GetAsync($"{_config.ApiBaseURL}/api/Transcript/GetUserTranscripts");
+                var userId = JwtHelper.GetUserIdFromToken(token);
+                if (string.IsNullOrEmpty(userId)) return RedirectToPage("/Login");
+
+                var transcriptResponse = await client.GetAsync($"{_config.ApiBaseURL}/api/transcript/{userId}");
                 if (!transcriptResponse.IsSuccessStatusCode)
                 {
                     Message = "Failed to fetch transcripts.";
@@ -62,7 +65,7 @@ namespace webapp1.Pages
                 }) ?? new();
 
                 // Get questions
-                var questionResponse = await client.GetAsync($"{_config.ApiBaseURL}/Questions/GetAllQuestions");
+                var questionResponse = await client.GetAsync($"{_config.ApiBaseURL}/questions");
                 if (!questionResponse.IsSuccessStatusCode)
                 {
                     Message = "Failed to fetch questions.";

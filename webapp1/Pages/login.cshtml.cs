@@ -1,4 +1,6 @@
-﻿using webapp1.Helpers;
+﻿using webapp1.Models;
+using webapp1.Helpers;
+using webapp1.Services;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,7 +10,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using System;
-using webapp1.Services;
 
 namespace webapp1.Pages
 {
@@ -20,11 +21,14 @@ namespace webapp1.Pages
         public string Message { get; set; }
 
         private readonly AppSettingConfig _config;
+        private readonly TokenManager _tokenManager;
 
-        public loginModel(IOptions<AppSettingConfig> config)
+        public loginModel(IOptions<AppSettingConfig> config, TokenManager tokenManager)
         {
             _config = config.Value;
+            _tokenManager = tokenManager;
         }
+
         public void OnGet()
         {
         }
@@ -32,75 +36,56 @@ namespace webapp1.Pages
         public async Task<IActionResult> OnPostAsync()
         {
             using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "WebClient/1.0");
 
             var loginPayload = new
             {
-                Username,
-                Password
+                username = Username,
+                password = Password
             };
 
-            var content = new StringContent(JsonSerializer.Serialize(loginPayload), Encoding.UTF8, "application/json");
+            var content = new StringContent(
+                JsonSerializer.Serialize(loginPayload),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await httpClient.PostAsync($"{_config.ApiBaseURL}/api/users/login", content);
+            var json = await response.Content.ReadAsStringAsync();
+            ;
 
             try
             {
-                var response = await httpClient.PostAsync($"{_config.ApiBaseURL}/api/Users/Login", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    Message = "Login failed: " + await response.Content.ReadAsStringAsync();
-                    return Page();
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(json);
 
-                if (doc.RootElement.TryGetProperty("data", out JsonElement dataElement))
+                if (doc.RootElement.TryGetProperty("data", out var dataElement))
                 {
-                    if (dataElement.TryGetProperty("accessToken", out JsonElement tokenElement) &&
-                        dataElement.TryGetProperty("refreshToken", out JsonElement refreshTokenElement))
+                    Message += "\n✅ 'data' found.";
+
+                    // Safely check inner structure
+                    if (dataElement.TryGetProperty("accessToken", out var at) &&
+                        dataElement.TryGetProperty("refreshToken", out var rt))
                     {
-                        string token = tokenElement.GetString();
-                        string refreshToken = refreshTokenElement.GetString();
-
-                        Response.Cookies.Append("AuthToken", token, new CookieOptions
-                        {
-                            HttpOnly = true,
-                            Secure = true,
-                            SameSite = SameSiteMode.Strict,
-                            Expires = DateTimeOffset.UtcNow.AddMinutes(30)
-                        });
-
-                        Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
-                        {
-                            HttpOnly = true,
-                            Secure = true,
-                            SameSite = SameSiteMode.Strict,
-                            Expires = DateTimeOffset.UtcNow.AddDays(7)
-                        });
-
-                        TempData["Username"] = Username;
-                        TempData["Password"] = Password;
-
-                        return RedirectToPage("/Main");
+                        ViewData["AccessToken"] = at.GetString();
+                        ViewData["RefreshToken"] = rt.GetString();
+                        Message += "\n✅ Tokens extracted.";
                     }
                     else
                     {
-                        Message = "Login response missing token information.";
-                        return Page();
+                        Message += "\n❌ Tokens missing inside 'data'.";
                     }
                 }
                 else
                 {
-                    Message = "Unexpected login response format.";
-                    return Page();
+                    Message += "\n❌ 'data' property not found.";
                 }
             }
             catch (Exception ex)
             {
-                Message = "An error occurred: " + ex.Message;
-                return Page();
+                Message += $"\nException during JSON parsing: {ex.Message}";
             }
-        }
 
+            return Page();
+        }
     }
 }

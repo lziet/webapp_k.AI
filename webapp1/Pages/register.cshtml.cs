@@ -1,12 +1,14 @@
-﻿using webapp1.Helpers;
+﻿using webapp1.Models;
+using webapp1.Helpers;
+using webapp1.Services;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Security.Claims;
-using webapp1.Services;
 using System.Text.Json;
+using System.Text;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System;
 
 namespace webapp1.Pages
 {
@@ -21,48 +23,43 @@ namespace webapp1.Pages
 
         public string Message { get; set; }
 
-        // Giả lập lưu trữ người dùng trong RAM
-        public static Dictionary<string, UserInfo> Users = new();
-
-        public class UserInfo
-        {
-            public string FullName { get; set; }
-            public string Email { get; set; }
-            public string PhoneNumber { get; set; }
-            public string Address { get; set; }
-            public string Password { get; set; }
-        }
-
         private readonly AppSettingConfig _config;
+        private readonly TokenManager _tokenManager;
 
-        public registerModel(IOptions<AppSettingConfig> config)
+        public registerModel(IOptions<AppSettingConfig> config, TokenManager tokenManager)
         {
             _config = config.Value;
+            _tokenManager = tokenManager;
         }
+
         public async Task<IActionResult> OnPostAsync()
         {
             using var httpClient = new HttpClient();
 
-            var registerPayload = new
+            // ✅ Add required headers
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "WebClient/1.0");
+
+            // ✅ Use UserRegisterDto for registration payload
+            var registerPayload = new UserRegisterDto
             {
-                FullName,
-                Email,
+                Username = Username,
+                Password = Password,
+                FullName = FullName,
+                Email = Email,
                 Phone = PhoneNumber,
-                Address,
-                Username,
-                Password
+                Address = Address
             };
 
             var registerContent = new StringContent(
-                System.Text.Json.JsonSerializer.Serialize(registerPayload),
-                System.Text.Encoding.UTF8,
+                JsonSerializer.Serialize(registerPayload),
+                Encoding.UTF8,
                 "application/json"
             );
 
             try
             {
-                // Step 1: Register
-                var regResponse = await httpClient.PostAsync($"{_config.ApiBaseURL}/Users/Create", registerContent);
+                // ✅ Step 1: Send registration request
+                var regResponse = await httpClient.PostAsync($"{_config.ApiBaseURL}/users", registerContent);
 
                 if (!regResponse.IsSuccessStatusCode)
                 {
@@ -71,15 +68,20 @@ namespace webapp1.Pages
                     return Page();
                 }
 
-                // Step 2: Login
-                var loginPayload = new { Username, Password };
+                // ✅ Step 2: Login with same credentials using UserLoginDto
+                var loginPayload = new UserLoginDto
+                {
+                    Username = Username,
+                    Password = Password
+                };
+
                 var loginContent = new StringContent(
-                    System.Text.Json.JsonSerializer.Serialize(loginPayload),
-                    System.Text.Encoding.UTF8,
+                    JsonSerializer.Serialize(loginPayload),
+                    Encoding.UTF8,
                     "application/json"
                 );
 
-                var loginResponse = await httpClient.PostAsync($"{_config.ApiBaseURL}/api/Users/Login", loginContent);
+                var loginResponse = await httpClient.PostAsync($"{_config.ApiBaseURL}/api/users/login", loginContent);
 
                 if (!loginResponse.IsSuccessStatusCode)
                 {
@@ -89,38 +91,24 @@ namespace webapp1.Pages
                 }
 
                 var loginJson = await loginResponse.Content.ReadAsStringAsync();
-                using var doc = System.Text.Json.JsonDocument.Parse(loginJson);
+                using var doc = JsonDocument.Parse(loginJson);
 
-                if (doc.RootElement.TryGetProperty("data", out JsonElement dataElement) &&
-                    dataElement.TryGetProperty("accessToken", out JsonElement accessTokenElement) &&
-                    dataElement.TryGetProperty("refreshToken", out JsonElement refreshTokenElement))
+                if (doc.RootElement.TryGetProperty("data", out var dataElement))
                 {
-                    var accessToken = accessTokenElement.GetString();
-                    var refreshTokenValue = refreshTokenElement.GetString(); // renamed to avoid CS0136
+                    var tokenModel = JsonSerializer.Deserialize<TokenModel>(dataElement.ToString());
 
-                    Response.Cookies.Append("AuthToken", accessToken, new CookieOptions
+                    if (tokenModel != null && !string.IsNullOrEmpty(tokenModel.AccessToken))
                     {
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(30)
-                    });
+                        _tokenManager.StoreTokens(tokenModel);
+                        return RedirectToPage("/Main");
+                    }
 
-                    Response.Cookies.Append("RefreshToken", refreshTokenValue, new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTimeOffset.UtcNow.AddDays(7)
-                    });
-
-                    return RedirectToPage("/Main");
-                }
-                else
-                {
-                    Message = "Login response missing token information.";
+                    Message = "Login response missing or invalid token.";
                     return Page();
                 }
+
+                Message = "Unexpected login response format.";
+                return Page();
             }
             catch (Exception ex)
             {
@@ -128,7 +116,5 @@ namespace webapp1.Pages
                 return Page();
             }
         }
-
-
     }
 }

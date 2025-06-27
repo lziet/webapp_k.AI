@@ -35,6 +35,12 @@
     <div class="center-container">
         <div class="login-card">
             <h2>Login</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Message))
+            {
+                <div class="alert alert-info">
+                    @Model.Message
+                </div>
+            }
             <form method="post">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="Username" asp-for="Username" class="form-control" required />
@@ -56,5 +62,22 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script type="module" src="/js/tokenManager.js"></script>
+
+    @section Scripts {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const accessToken = '@(ViewData["AccessToken"] ?? "")';
+                const refreshToken = '@(ViewData["RefreshToken"] ?? "")';
+
+                if (accessToken && refreshToken) {
+                    sessionStorage.setItem("jwt", accessToken);
+                    sessionStorage.setItem("refreshToken", refreshToken);
+
+                    window.location.href = "/Main";
+                }
+            });
+        </script>
+    }
+
 </body>

@@ -17,140 +17,73 @@ function parseJwt(token) {
 
 function logTokenExpiry() {
     const token = sessionStorage.getItem("jwt");
-    if (!token) {
-        console.warn("No token found in sessionStorage.");
-        return;
-    }
+    if (!token) return;
 
     const decoded = parseJwt(token);
-    if (!decoded || !decoded.exp) {
-        console.warn("Token is invalid or missing expiration.");
-        return;
-    }
+    if (!decoded?.exp) return;
 
     const expiry = decoded.exp * 1000;
-    const expiryDate = new Date(expiry);
-    const remaining = Math.floor((expiry - Date.now()) / 1000);
-
-    console.log("🔐 Token expires at:", expiryDate.toUTCString());
-    console.log("⏳ Time remaining (seconds):", remaining);
+    console.log("🔐 Token expires at:", new Date(expiry).toUTCString());
+    console.log("⏳ Time remaining (seconds):", Math.floor((expiry - Date.now()) / 1000));
 }
 
-async function loginAndRefresh() {
-    const username = sessionStorage.getItem("username");
-    const password = sessionStorage.getItem("password");
-    if (!username || !password) return;
-
-    try {
-        const response = await fetch('/api/Users/Login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-        if (data && data.data && data.data.accessToken && data.data.refreshToken) {
-            const token = data.data.accessToken;
-            const refreshToken = data.data.refreshToken;
-            sessionStorage.setItem("jwt", token);
-            sessionStorage.setItem("refreshToken", refreshToken);
-            scheduleRefresh(token);
-        }
-
-    } catch (err) {
-        console.error("Token refresh failed", err);
-    }
-}
-
-async function renewToken() {
+function renewToken() {
     const refreshToken = sessionStorage.getItem("refreshToken");
-    if (!refreshToken) {
-        console.warn("No refresh token available.");
-        return;
-    }
+    if (!refreshToken) return;
 
-    try {
-        const response = await fetch('/api/Users/RenewToken', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken })
+    fetch('/api/users/renew-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data?.data?.token) {
+                sessionStorage.setItem("jwt", data.data.token);
+                scheduleRefresh(data.data.token);
+                console.log("🔄 Token renewed.");
+            }
+        })
+        .catch(err => {
+            console.error("Token renewal error", err);
         });
-
-        const data = await response.json();
-        if (data && data.data && data.data.token) {
-            const token = data.data.token;
-            sessionStorage.setItem("jwt", token);
-            scheduleRefresh(token);
-            console.log("🔄 Token successfully renewed.");
-        } else {
-            console.warn("Token renewal failed.");
-        }
-    } catch (err) {
-        console.error("Token renewal error", err);
-    }
 }
-
 
 function scheduleRefresh(token) {
     const decoded = parseJwt(token);
-    if (!decoded || !decoded.exp) return;
+    if (!decoded?.exp) return;
 
-    const expiry = decoded.exp * 1000;
-    const now = Date.now();
-    const refreshTime = expiry - (5 * 60 * 1000); // 5 minutes before expiration
-
-    const msUntilRefresh = refreshTime - now;
-    if (msUntilRefresh <= 0) {
-        console.warn("Token already near expiry or expired");
-        return;
-    }
+    const msUntilRefresh = (decoded.exp * 1000) - Date.now() - (5 * 60 * 1000);
+    if (msUntilRefresh <= 0) return;
 
     if (refreshTimer) clearTimeout(refreshTimer);
-
     refreshTimer = setTimeout(() => {
         if (document.visibilityState === 'visible') {
             renewToken();
         }
     }, msUntilRefresh);
-
 }
 
 function checkAndRefreshToken() {
     const token = sessionStorage.getItem("jwt");
-    if (!token) {
-        console.warn("No token found for scheduled check.");
-        return;
-    }
+    if (!token) return;
 
     const decoded = parseJwt(token);
-    if (!decoded || !decoded.exp) {
-        console.warn("Token is invalid or missing exp.");
-        return;
-    }
+    if (!decoded?.exp) return;
 
     const expiry = decoded.exp * 1000;
     const timeLeft = expiry - Date.now();
 
-    if (timeLeft <= 60 * 1000) { // 1 minute left
+    if (timeLeft <= 60 * 1000) {
         console.log("⚠️ Token about to expire — refreshing...");
-        loginAndRefresh();
+        renewToken();
     }
-
-    refreshTimer = setTimeout(() => {
-        if (document.visibilityState === 'visible') {
-            renewToken();
-        }
-    }, msUntilRefresh);
-
 }
 
-function initializeTokenManager() {
-    loginAndRefresh(); // Initial login or refresh
-    logTokenExpiry();  // Log immediately on page load
-
+export function initializeTokenManager() {
+    logTokenExpiry();
     if (refreshInterval) clearInterval(refreshInterval);
 
-    // Check every 30s
     refreshInterval = setInterval(() => {
         if (document.visibilityState === 'visible') {
             checkAndRefreshToken();
@@ -159,25 +92,6 @@ function initializeTokenManager() {
     }, 30000);
 }
 
-// Auto-run on page load
 document.addEventListener("DOMContentLoaded", () => {
     initializeTokenManager();
-    updateAuthUI(); // 👈 Add this line
 });
-function updateAuthUI() {
-    const token = sessionStorage.getItem("jwt");
-    const decoded = parseJwt(token);
-    const now = Date.now();
-
-    if (token && decoded && decoded.exp * 1000 > now) {
-        const authButtons = document.getElementById("auth-buttons");
-        if (authButtons) {
-            authButtons.innerHTML = `
-                <button class="btn btn-success" onclick="location.href='/MainPage'">
-                    Vào trang chính
-                </button>
-            `;
-        }
-    }
-}
-

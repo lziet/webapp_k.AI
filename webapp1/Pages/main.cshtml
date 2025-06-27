@@ -1,10 +1,8 @@
 ﻿@page
 @model mainModel
 @{
-    var user = Model.UserData;
     Layout = "_Layout";
 }
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -32,8 +30,7 @@
             width: 300px;
         }
 
-        h2,
-        h3 {
+        h2, h3 {
             text-align: center;
         }
 
@@ -167,18 +164,15 @@
                 box-shadow: 3px 6px 12px rgba(0, 0, 0, 0.2);
             }
 
-        /* Default box width */
         .box-card {
             width: 400px;
             transition: width 0.3s ease;
         }
 
-            /* Wider when in edit mode */
             .box-card.wide {
-                width: 620px; /* fits 2 columns + spacing */
+                width: 620px;
             }
 
-        /* Form grid layout */
         #editForm {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -193,7 +187,7 @@
             }
 
             #editForm button {
-                grid-column: span 2; /* Buttons span full width */
+                grid-column: span 2;
             }
 
         .subpad {
@@ -204,134 +198,214 @@
 </head>
 <body class="body">
     <div class="subpad">
-    <div class="welcome">
-        <h2>Xin chào, @user.FullName!</h2>
-        <p>
-            Đây là trang chính. Bạn có thể xem và chỉnh sửa thông tin tài khoản của mình hoặc làm bài kiểm tra đánh giá năng lực bên dưới  
-        </p>
-    </div>
+        <div class="welcome">
+            <h2 id="greeting">Đang tải thông tin người dùng...</h2>
+            <p>Đây là trang chính. Bạn có thể xem và chỉnh sửa thông tin tài khoản của mình hoặc làm bài kiểm tra đánh giá năng lực bên dưới</p>
+        </div>
 
-    <div class="container">
-        <!-- Left Box: Account Info -->
-        <div class="box-card" id="leftBox">
-            <!-- View Mode -->
-            <div id="infoDisplay">
-                <h3>Thông Tin Tài Khoản</h3>
-                <ul>
-                    <li><strong>Username:</strong> @user.Username</li>
-                    <li><strong>Full Name:</strong> @user.FullName</li>
-                    <li><strong>Email:</strong> @user.Email</li>
-                    <li><strong>Phone:</strong> @user.Phone</li>
-                    <li><strong>Address:</strong> @user.Address</li>
-                </ul>
-                <form>
-                    <button type="button"
-                            class="change-btn"
-                            onclick="toggleEdit(true)">
-                        Thay đổi thông tin
-                    </button>
+        <div class="container">
+            <div class="box-card" id="leftBox">
+                <div id="infoDisplay">
+                    <h3>Thông Tin Tài Khoản</h3>
+                    <ul id="userInfoList"></ul>
+                    <form>
+                        <button type="button" class="change-btn" onclick="toggleEdit(true)">Thay đổi thông tin</button>
+                    </form>
+                </div>
+
+                <div id="infoEdit" style="display: none">
+                    <h3>User Info</h3>
+                    <form method="post" id="editForm">
+                        <input type="hidden" name="action" value="update" />
+                        <label>Full Name:<input type="text" name="FullName" /></label>
+                        <label>Email:<input type="email" name="Email" /></label>
+                        <label>Phone:<input type="text" name="Phone" /></label>
+                        <label>Address:<input type="text" name="Address" /></label>
+                        <label>Username:<input type="text" name="Username" /></label>
+                        <label>Password:<input type="password" name="Password" /></label>
+                        <button type="submit">Save Changes</button>
+                        <button type="button" onclick="toggleEdit(false)">Cancel</button>
+                    </form>
+                </div>
+
+                <form method="post">
+                    <button type="submit" name="action" value="logout">Đăng Xuất</button>
                 </form>
             </div>
 
-            <!-- Edit Mode -->
-            <div id="infoEdit" style="display: none">
-                <h3>User Info</h3>
-                <form method="post" id="editForm">
-                    <input type="hidden" name="action" value="update" />
-                    <label>
-                        Full Name:
-                        <input type="text"
-                               name="FullName"
-                               value="@user.FullName" />
-                    </label>
-                    <label>
-                        Email:
-                        <input type="email"
-                               name="Email"
-                               value="@user.Email" />
-                    </label>
-                    <label>
-                        Phone:
-                        <input type="text"
-                               name="Phone"
-                               value="@user.Phone" />
-                    </label>
-                    <label>
-                        Address:
-                        <input type="text"
-                               name="Address"
-                               value="@user.Address" />
-                    </label>
-                    <label>
-                        Username:
-                        <input type="text"
-                               name="Username"
-                               value="@user.Username" />
-                    </label>
-                    <label>
-                        Password:
-                        <input type="password"
-                               name="Password"
-                               value="@user.Password" />
-                    </label>
-
-                    <button type="submit">Save Changes</button>
-                    <button type="button" onclick="toggleEdit(false)">
-                        Cancel
-                    </button>
-                </form>
+            <div class="box-card">
+                <h2>Lựa Chọn</h2>
+                <a asp-page="/test">Làm Bài Kiểm Tra</a>
+                <a asp-page="/results">Kết Quả</a>
             </div>
-
-            <!-- Logout -->
-            <form method="post">
-                <button type="submit" name="action" value="logout">
-                    Đăng Xuất
-                </button>
-            </form>
-        </div>
-
-        <!-- Right Box: Options -->
-        <div class="box-card">
-            <h2>Lựa Chọn</h2>
-            <a asp-page="/test">Làm Bài Kiểm Tra</a>
-            <a asp-page="/results">Kết Quả</a>
         </div>
     </div>
-    </div>
 
+    <!-- Expose function for inline onclicks -->
     <script>
         function toggleEdit(showEdit) {
             document.getElementById('infoDisplay').style.display = showEdit ? 'none' : 'block';
             document.getElementById('infoEdit').style.display = showEdit ? 'block' : 'none';
 
             const box = document.getElementById('leftBox');
-            if (showEdit) {
-                box.classList.add('wide');
-            } else {
-                box.classList.remove('wide');
+            box.classList.toggle('wide', showEdit);
+        }
+    </script>
+
+    <script type="module">
+        const apiBaseUrl = "@Model.ApiBaseUrl";
+
+        async function initPage() {
+            function parseJwt(token) {
+                try {
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+                        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                    ).join(''));
+                    return JSON.parse(jsonPayload);
+                } catch (err) {
+                    console.error("Invalid token format:", err);
+                    return null;
+                }
             }
+
+            const jwt = sessionStorage.getItem("jwt");
+            const storedPassword = sessionStorage.getItem("loginPassword");
+
+            if (!jwt) {
+                document.getElementById("greeting").textContent = "Không tìm thấy token.";
+                return;
+            }
+
+            const payload = parseJwt(jwt);
+            if (!payload || !payload.nameid) {
+                document.getElementById("greeting").textContent = "Token không hợp lệ.";
+                return;
+            }
+
+            const userInfo = {
+                Username: payload.unique_name ?? '',
+                FullName: payload.Fullname ?? '',
+                Email: payload.email ?? '',
+                Phone: payload.Phone ?? '',
+                Address: payload.Address ?? ''
+            };
+
+            // Fill display info
+            const infoList = document.getElementById("userInfoList");
+            infoList.innerHTML = "";
+            for (const key in userInfo) {
+                const label = key.replace(/([A-Z])/g, ' $1').trim();
+                infoList.innerHTML += `<li><strong>${label}:</strong> ${userInfo[key]}</li>`;
+            }
+
+            // Fill edit fields
+            for (const key in userInfo) {
+                const input = document.querySelector(`#editForm [name='${key}']`);
+                if (input) input.value = userInfo[key];
+            }
+
+            // ✅ Handle update + auto-login
+            document.querySelector("#editForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const newUsername = document.querySelector("[name='Username']").value || null;
+                const newPassword = document.querySelector("[name='Password']").value || storedPassword;
+
+                const updated = {
+                    username: newUsername,
+                    password: newPassword,
+                    fullname: document.querySelector("[name='FullName']").value || null,
+                    email: document.querySelector("[name='Email']").value || null,
+                    phone: document.querySelector("[name='Phone']").value || null,
+                    address: document.querySelector("[name='Address']").value || null
+                };
+
+                const userId = payload.nameid;
+                const updateUrl = `${apiBaseUrl}/api/users/${userId}`;
+
+                try {
+                    const updateRes = await fetch(updateUrl, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + jwt
+                        },
+                        body: JSON.stringify(updated)
+                    });
+
+                    if (!updateRes.ok) {
+                        const err = await updateRes.text();
+                        console.error("Update failed:", err);
+                        alert("Cập nhật thất bại.");
+                        return;
+                    }
+
+                    // 🔁 Re-login
+                    const loginRes = await fetch(`${apiBaseUrl}/api/users/login`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: newUsername, password: newPassword })
+                    });
+
+                    const loginData = await loginRes.json();
+
+                    if (!loginRes.ok || !loginData.data?.accessToken || !loginData.data?.refreshToken) {
+                        console.error("Login failed:", loginData);
+                        alert("Đăng nhập lại thất bại.");
+                        return;
+                    }
+
+                    // ✅ Save tokens and clean up
+                    sessionStorage.setItem("jwt", loginData.data.accessToken);
+                    sessionStorage.setItem("refreshToken", loginData.data.refreshToken);
+                    sessionStorage.removeItem("loginPassword", newPassword); // persist updated password
+
+                    alert("Cập nhật và đăng nhập lại thành công.");
+                    location.reload();
+
+                } catch (err) {
+                    console.error("Lỗi trong quá trình cập nhật hoặc đăng nhập:", err);
+                    alert("Đã xảy ra lỗi.");
+                }
+            });
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            toggleEdit(false); // default to view mode
+        initPage();
+    </script>
+
+
+    <script>
+        document.querySelector("form button[name='action'][value='logout']").addEventListener("click", async function (e) {
+            e.preventDefault();
+
+            try {
+                // Optional: if your API requires auth, include the token
+                const jwt = sessionStorage.getItem("jwt");
+
+                await fetch("@Model.ApiBaseUrl/api/users/logout", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": jwt ? `Bearer ${jwt}` : undefined
+                    }
+                });
+
+                // Clear session tokens
+                sessionStorage.removeItem("jwt");
+                sessionStorage.removeItem("refreshToken");
+
+                // Redirect to login
+                window.location.href = "/login";
+
+            } catch (error) {
+                console.error("Logout failed:", error);
+                alert("Đăng xuất thất bại.");
+            }
         });
     </script>
 
-    @section Scripts {
-        <script type="module">
-            import { initializeTokenManager } from "/js/tokenManager.js";
-
-            const username = '@TempData["Username"]';
-            const password = '@TempData["Password"]';
-
-            if (username && password) {
-                sessionStorage.setItem("username", username);
-                sessionStorage.setItem("password", password);
-            }
-
-            initializeTokenManager();
-        </script>
-    }
 
 </body>
 </html>
