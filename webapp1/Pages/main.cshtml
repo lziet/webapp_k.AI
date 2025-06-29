@@ -284,6 +284,7 @@
                 return;
             }
 
+
             const userInfo = {
                 Username: payload.unique_name ?? '',
                 FullName: payload.Fullname ?? '',
@@ -291,6 +292,8 @@
                 Phone: payload.Phone ?? '',
                 Address: payload.Address ?? ''
             };
+
+            document.getElementById("greeting").textContent = `Xin chào, ${userInfo.FullName}!`;
 
             // Fill display info
             const infoList = document.getElementById("userInfoList");
