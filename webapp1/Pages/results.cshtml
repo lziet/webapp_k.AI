@@ -20,7 +20,6 @@
     </a>
 </div>
 
-<!-- Optional basic styling for aesthetics -->
 <style>
     .container {
         padding: 100px;
@@ -44,10 +43,18 @@
     }
 
     .transcript-body {
-        display: none;
-        padding: 16px;
+        max-height: 0;
+        overflow: hidden;
+        padding: 0 16px;
         background-color: #f9f9f9;
+        transition: max-height 0.4s ease, padding 0.4s ease;
     }
+
+
+        .transcript-body.open {
+            padding: 16px;
+            max-height: 1000px; /* enough to fit content */
+        }
 
         .transcript-body table {
             width: 100%;
@@ -67,59 +74,156 @@
 </style>
 
 <div class="container">
-
     <h1>KẾT QUẢ CÁC BÀI TEST CỦA BẠN</h1>
-
-    @if (Model.Transcripts.Count == 0)
-    {
-        <p>No transcripts found.</p>
-    }
-    else
-    {
-        foreach (var transcript in Model.Transcripts.OrderByDescending(t => t.Date))
-        {
-            <div class="transcript-card">
-                <div class="transcript-header" onclick="toggleTranscriptBody(this)">
-                    ID: @transcript.Id_transcript - @transcript.Date.ToString("M/d/yyyy h:mm tt")
-                </div>
-                <div class="transcript-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Question</th>
-                                <th>Answer</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (int i = 0; i < Model.Questions.Count; i++)
-                            {
-                                var question = Model.Questions[i];
-                                var answerCode = Model.GetAnswerForQuestion(transcript.Content, i + 1);
-                                var answerDesc = Model.GetAnswerDescription(answerCode);
-                                <tr>
-                                    <td>@(i + 1)</td>
-                                    <td>@question.Content</td>
-                                    <td>@answerDesc</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
-    }
-
-    @if (!string.IsNullOrEmpty(Model.Message))
-    {
-        <p style="color: red;">@Model.Message</p>
-    }
+    <div id="resultsContainer">
+        <p>Loading...</p>
+    </div>
 </div>
 
-<script>
-    function toggleTranscriptBody(header) {
-        const body = header.nextElementSibling;
-        const isVisible = body.style.display === "block";
-        body.style.display = isVisible ? "none" : "block";
-    }
-</script>
+@section Scripts {
+    <script type="module">
+        const apiBaseUrl = "@Model.ApiBaseUrl";
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+                    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+                ).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                console.error("Invalid JWT:", e);
+                return null;
+            }
+        }
+
+        function getAnswerDescription(code) {
+            const val = parseInt(code?.substring(2, 3));
+            return ({
+                1: "Disagree",
+                2: "Slightly disagree",
+                3: "Neutral",
+                4: "Slightly agree",
+                5: "Agree"
+            })[val] || "Unknown";
+        }
+
+        function extractAnswers(content, totalQuestions) {
+            const result = [];
+            for (let i = 0; i < totalQuestions; i++) {
+                const start = i * 3;
+                result.push(content.substring(start, start + 3));
+            }
+            return result;
+        }
+
+        async function loadResults() {
+            const jwt = sessionStorage.getItem("jwt");
+            if (!jwt) {
+                location.href = "/Login";
+                return;
+            }
+
+            const payload = parseJwt(jwt);
+            if (!payload?.nameid) {
+                location.href = "/Login";
+                return;
+            }
+
+            const userId = payload.nameid;
+            const headers = {
+                "Authorization": "Bearer " + jwt
+            };
+
+            try {
+                const jwt = sessionStorage.getItem("jwt"); // Ensure you retrieve the token from sessionStorage
+                const headers = {
+                    "Authorization": "Bearer " + jwt,
+                    "Content-Type": "application/json"
+                };
+
+                const [transcriptRes, questionRes] = await Promise.all([
+                    fetch(`${apiBaseUrl}/api/transcripts/`, {
+                        headers: headers
+                    }),
+                    fetch(`${apiBaseUrl}/api/questions`, {
+                        headers: headers
+                    })
+                ]);
+
+                if (!transcriptRes.ok || !questionRes.ok) {
+                    document.getElementById("resultsContainer").innerHTML = "<p>Failed to load data.</p>";
+                    return;
+                }
+
+                const transcripts = await transcriptRes.json();
+                const questions = await questionRes.json();
+
+                let html = "";
+
+                if (transcripts.length === 0) {
+                    html = "<p>No transcripts found.</p>";
+                } else {
+                    for (const t of transcripts.sort((a, b) => new Date(b.date) - new Date(a.date))) {
+                        const answers = extractAnswers(t.content, questions.length);
+                        html += `
+                                            <div class="transcript-card">
+                                                <div class="transcript-header" onclick="toggleTranscriptBody(this)">
+                                                    ID: ${t.id_transcript} - ${new Date(t.date).toLocaleString()}
+                                                </div>
+                                                <div class="transcript-body">
+                                                    <table>
+                                                        <thead>
+                                                            <tr><th>#</th><th>Question</th><th>Answer</th></tr>
+                                                        </thead>
+                                                        <tbody>
+                                        `;
+                        for (let i = 0; i < questions.length; i++) {
+                            const code = answers[i] || "???";
+                            html += `
+                                                <tr>
+                                                    <td>${i + 1}</td>
+                                                    <td>${questions[i].content}</td>
+                                                    <td>${getAnswerDescription(code)}</td>
+                                                </tr>`;
+                        }
+
+                        html += `</tbody></table></div></div>`;
+                    }
+                }
+
+                document.getElementById("resultsContainer").innerHTML = html;
+
+            } catch (err) {
+                console.error("Error loading results:", err);
+                document.getElementById("resultsContainer").innerHTML = "<p>Error occurred.</p>";
+            }
+        }
+
+        loadResults();
+    </script>
+
+    <script>
+        function toggleTranscriptBody(header) {
+            const body = header.nextElementSibling;
+
+            if (body.style.maxHeight && body.style.maxHeight !== "0px") {
+                // Closing animation
+                body.style.maxHeight = "0px";
+                body.style.paddingTop = "0px";
+                body.style.paddingBottom = "0px";
+            } else {
+                // Reset padding in case previously closed
+                body.style.paddingTop = "16px";
+                body.style.paddingBottom = "16px";
+
+                // Calculate full height and animate open
+                const scrollHeight = body.scrollHeight;
+                body.style.maxHeight = scrollHeight + "px";
+            }
+        }
+    </script>
+
+
+}
