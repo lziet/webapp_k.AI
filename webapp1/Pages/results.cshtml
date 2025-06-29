@@ -118,6 +118,13 @@
             return result;
         }
 
+        function formatToGMT7(dateString) {
+            const date = new Date(dateString);
+            // Add 7 hours (7 * 60 * 60 * 1000 ms)
+            const gmt7Date = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+            return gmt7Date.toLocaleString('vi-VN'); // or 'en-GB', etc.
+        }
+
         async function loadResults() {
             const jwt = sessionStorage.getItem("jwt");
             if (!jwt) {
@@ -133,23 +140,14 @@
 
             const userId = payload.nameid;
             const headers = {
-                "Authorization": "Bearer " + jwt
+                "Authorization": "Bearer " + jwt,
+                "Content-Type": "application/json"
             };
 
             try {
-                const jwt = sessionStorage.getItem("jwt"); // Ensure you retrieve the token from sessionStorage
-                const headers = {
-                    "Authorization": "Bearer " + jwt,
-                    "Content-Type": "application/json"
-                };
-
                 const [transcriptRes, questionRes] = await Promise.all([
-                    fetch(`${apiBaseUrl}/api/transcripts/`, {
-                        headers: headers
-                    }),
-                    fetch(`${apiBaseUrl}/api/questions`, {
-                        headers: headers
-                    })
+                    fetch(`${apiBaseUrl}/api/transcripts/`, { headers }),
+                    fetch(`${apiBaseUrl}/api/questions`, { headers })
                 ]);
 
                 if (!transcriptRes.ok || !questionRes.ok) {
@@ -168,25 +166,25 @@
                     for (const t of transcripts.sort((a, b) => new Date(b.date) - new Date(a.date))) {
                         const answers = extractAnswers(t.content, questions.length);
                         html += `
-                                            <div class="transcript-card">
-                                                <div class="transcript-header" onclick="toggleTranscriptBody(this)">
-                                                    ID: ${t.id_transcript} - ${new Date(t.date).toLocaleString()}
-                                                </div>
-                                                <div class="transcript-body">
-                                                    <table>
-                                                        <thead>
-                                                            <tr><th>#</th><th>Question</th><th>Answer</th></tr>
-                                                        </thead>
-                                                        <tbody>
-                                        `;
+                                    <div class="transcript-card">
+                                        <div class="transcript-header" onclick="toggleTranscriptBody(this)">
+                                            ID: ${t.id_transcript} - ${formatToGMT7(t.date)}
+                                        </div>
+                                        <div class="transcript-body">
+                                            <table>
+                                                <thead>
+                                                    <tr><th>#</th><th>Question</th><th>Answer</th></tr>
+                                                </thead>
+                                                <tbody>
+                                `;
                         for (let i = 0; i < questions.length; i++) {
                             const code = answers[i] || "???";
                             html += `
-                                                <tr>
-                                                    <td>${i + 1}</td>
-                                                    <td>${questions[i].content}</td>
-                                                    <td>${getAnswerDescription(code)}</td>
-                                                </tr>`;
+                                                    <tr>
+                                                        <td>${i + 1}</td>
+                                                        <td>${questions[i].content}</td>
+                                                        <td>${getAnswerDescription(code)}</td>
+                                                    </tr>`;
                         }
 
                         html += `</tbody></table></div></div>`;
@@ -224,6 +222,5 @@
             }
         }
     </script>
-
-
 }
+
